@@ -68,7 +68,7 @@ Here's the options that I have for Admins:
 /swap_enable <true|false|1|0|yes|no>
  - Master switch to enable or disable swapping messages in this chat.
 
-Please message my maintainer for more info or questions!`
+Please message my maintainers (@secfurry or @iDigitalFlame) for more info or questions!`
 const helpMessageBasic = `Hello there, I'm StickerSwapBot!
 
 I can swap or suggest stickers by a set word or parse!
