@@ -1,0 +1,10 @@
+github.com/PurpleSec/logx v1.0.0 h1:gffIzRnADlWxzblLF0auhNjfWCl2CJsbF8Tb8O3of+U=
+github.com/PurpleSec/logx v1.0.0/go.mod h1:tkLK6CqkhkRSVejDMVgZa0jTq97aRikVNjAON9iUiK0=
+github.com/PurpleSec/mapper v0.0.0-20201005154203-1d2a6ff39afa h1:UHu5PcKlZhhQrImQ2r6fK4x7L7OWQ64kc1mUejKBm9o=
+github.com/PurpleSec/mapper v0.0.0-20201005154203-1d2a6ff39afa/go.mod h1:JG1Dz4MqBCLDqTLp+k9l9eDLEGU3Ed16iFpzx5yb3oI=
+github.com/go-sql-driver/mysql v1.5.0 h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gGcHOs=
+github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
+github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible h1:2cauKuaELYAEARXRkq2LrJ0yDDv1rW7+wrTEdVL3uaU=
+github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible/go.mod h1:qf9acutJ8cwBUhm1bqgz6Bei9/C/c93FPDljKWwsOgM=
+github.com/technoweenie/multipartstreamer v1.0.1 h1:XRztA5MXiR1TIRHxH2uNxXxaIkKQDeX7m2XsSOlQEnM=
+github.com/technoweenie/multipartstreamer v1.0.1/go.mod h1:jNVxdtShOxzAsukZwTSw6MDx5eUJoiEBsSvzDU9uzog=
