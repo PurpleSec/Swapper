@@ -72,6 +72,7 @@ func (s *Swapper) Run() error {
 	}
 cleanup:
 	s.cancel()
+	s.bot.StopReceivingUpdates()
 	g.Wait()
 	close(o)
 	close(m)
