@@ -100,6 +100,7 @@ var queryStatements = map[string]string{
 	"swap":            `CALL GetSticker(?, ?, ?)`,
 	"list":            `SELECT Keyword FROM Mappings where UserID = ?`,
 	"clear":           `DELETE FROM Mappings where UserID = ?`,
+	"inline":          `SELECT StickerID FROM Mappings WHERE UserID = ? AND Keyword LIKE ?`,
 	"get_swap":        `SELECT StickerID FROM Mappings WHERE UserID = ? AND Keyword = ?`,
 	"set_swap":        `CALL SetSticker(?, ?, ?)`,
 	"del_swap":        `DELETE FROM Mappings WHERE UserID = ? AND Keyword = ?`,

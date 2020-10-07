@@ -18,6 +18,7 @@ package swapper
 
 import (
 	"context"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -67,29 +68,33 @@ func (s *Swapper) update(i int64, a, t uint16) {
 		l.count, l.free = 0, time.Now().Add(l.gap)
 	}
 }
-func (s *Swapper) swapInline(x context.Context, m *telegram.InlineQuery) interface{} {
+func (s *Swapper) swapInline(x context.Context, m *telegram.InlineQuery) []interface{} {
 	if len(m.Query) < 3 || len(m.Query) > 16 {
 		return nil
 	}
-	r, err := s.sql.QueryContext(x, "get_swap", m.From.ID, strings.TrimSpace(m.Query))
+	r, err := s.sql.QueryContext(x, "inline", m.From.ID, strings.TrimSpace(m.Query)+"%")
 	if err != nil {
 		s.log.Error("Received an error attemting to get the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
 	}
-	var v string
-	for r.Next() {
+	var (
+		v string
+		o []interface{}
+	)
+	for i := 0; r.Next(); i++ {
 		if err = r.Scan(&v); err != nil {
 			break
 		}
+		o = append(o, sticker{ID: m.ID + "res" + strconv.Itoa(i), Type: "sticker", Title: m.Query, StickerID: v})
 	}
 	if r.Close(); err != nil {
-		s.log.Error("Received an error attemting to scan the inline  sticker value for UID: %d: %s!", m.From.ID, err.Error())
+		s.log.Error("Received an error attemting to scan the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
 		return nil
 	}
-	if len(v) == 0 {
+	if len(o) == 0 {
 		return nil
 	}
 	s.log.Trace("Found an inline swap match %q by %s!", v, m.From.String())
-	return sticker{ID: m.ID, Type: "sticker", Title: m.Query, StickerID: v}
+	return o
 }
 func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram.Chattable) {
 	if m.From.IsBot || len(m.Text) == 0 || len(m.Text) < 3 || len(m.Text) > 16 || m.Text[0] == '/' || m.Text[0] < 33 {
@@ -143,7 +148,6 @@ func (s *Swapper) threadSend(x context.Context, g *sync.WaitGroup, o <-chan tele
 		select {
 		case n := <-o:
 			if _, err := s.bot.Send(n); err != nil {
-
 				s.log.Error(`Error sending Telegram message to chat: %s!`, err.Error())
 			}
 		case <-x.Done():
@@ -159,17 +163,13 @@ func (s *Swapper) threadReceive(x context.Context, g *sync.WaitGroup, o chan<- t
 		select {
 		case n := <-r:
 			if n.InlineQuery != nil {
-				var (
-					r = s.swapInline(x, n.InlineQuery)
-					c = telegram.InlineConfig{
-						CacheTime:     30,
-						IsPersonal:    true,
-						InlineQueryID: n.InlineQuery.ID,
-					}
-				)
-				if r != nil {
-					c.Results = []interface{}{r}
-				} else {
+				c := telegram.InlineConfig{
+					Results:       s.swapInline(x, n.InlineQuery),
+					CacheTime:     30,
+					IsPersonal:    true,
+					InlineQueryID: n.InlineQuery.ID,
+				}
+				if len(c.Results) == 0 {
 					c.SwitchPMText = "Click here to add some Stickers!"
 					c.SwitchPMParameter = "new"
 				}
