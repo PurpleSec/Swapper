@@ -46,6 +46,7 @@ Try this in any chat (I don't have to be in it) by entering @StickerSwapBot <wor
 
 If you're an Admin of a group and would like to use me, have no fear!
 I have some options that can set (per-group) to set limits on how many swaps I can do.
+(These commands have to be used in the Group that you want to set the options in).
 
 Here's the options that I have for Admins:
 (All of these commands require Admin permissions, else I'll ignore them).
@@ -54,7 +55,7 @@ Here's the options that I have for Admins:
  - Show a help message.
 
 /swap_options
- - Show the settings that you've configured for this Group.
+ - Show the settings that you've configured for the Group.
 
 /swap_limit <number of swaps (0 - 65535)>
  - Set a number of times I can perform a swap during the Timeout period. Set to zero to disable.
