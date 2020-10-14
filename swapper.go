@@ -59,7 +59,7 @@ func (s *Swapper) Run() error {
 	)
 	signal.Notify(o, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	x, s.cancel = context.WithCancel(context.Background())
-	s.log.Info("Twitter Watcher Telegram Bot Started, spinning up threads...")
+	s.log.Info("Swapper Telegram Bot Started, spinning up threads...")
 	go s.threadSend(x, &g, m)
 	go s.threadReceive(x, &g, m, r)
 	for {
