@@ -71,6 +71,7 @@ func (s *Swapper) Run() error {
 		}
 	}
 cleanup:
+	signal.Stop(o)
 	s.cancel()
 	s.bot.StopReceivingUpdates()
 	g.Wait()
