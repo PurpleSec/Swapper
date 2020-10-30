@@ -24,7 +24,8 @@ import (
 	telegram "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-const helpMessageAdmin = `As a group Admin, you can set some limits on me!
+const (
+	helpMessageAdmin = `As a group Admin, you can set some limits on me!
 
 /swap_help
  - Show this help message.
@@ -43,26 +44,10 @@ const helpMessageAdmin = `As a group Admin, you can set some limits on me!
 
 /swap_enable <true|false|1|0|yes|no>
  - Master switch to enable or disable swapping messages in this chat.`
-
-const errorMessageAdmin = `Sorry I've seem to have encountered an error when changing that setting.
+	errorMessageAdmin = `Sorry I've seem to have encountered an error when changing that setting.
 
 Please try again later.`
-
-const invalidLimitValue = `Sorry I don't recognize that option value.
-
-The correct usage should be "/swap-limit <number of swaps (0 - 65535)>"`
-
-const invalidDeleteValue = `Sorry I don't recognize that option value.
-
-The correct usage should be "/swap-delete <true|false|1|0|yes|no>"`
-
-const invalidDisableValue = `Sorry I don't recognize that option value.
-
-The correct usage should be "/swap-enabled <true|false|1|0|yes|no>"`
-
-const invalidTimeoutValue = `Sorry I don't recognize that option value.
-
-The correct usage should be "/swap-timeout <number of seconds (0 - 65535)>"`
+)
 
 func stringMatchIndex(l int, s, m string) bool {
 	if len(s) < l || len(s) < len(m) {
@@ -134,7 +119,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 	case "limit":
 		v, err := strconv.ParseUint(l[d+1:], 10, 16)
 		if err != nil || v > 65536 {
-			sendResponse(o, m.Chat.ID, m.MessageID, invalidLimitValue)
+			sendResponse(o, m.Chat.ID, m.MessageID, "Sorry I don't recognize that option value.\n\nThe correct usage should be \"/swap-limit <number of swaps (0 - 65535)>\"")
 			return
 		}
 		if _, err := s.sql.ExecContext(x, "set_opt_limit", m.Chat.ID, v); err != nil {
@@ -153,7 +138,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			e = true
 		case "0", "false", "f", "no":
 		default:
-			sendResponse(o, m.Chat.ID, m.MessageID, invalidDisableValue)
+			sendResponse(o, m.Chat.ID, m.MessageID, "Sorry I don't recognize that option value.\n\nThe correct usage should be \"/swap-enabled <true|false|1|0|yes|no>\"")
 			return
 		}
 		if _, err := s.sql.ExecContext(x, "set_opt_enable", m.Chat.ID, e); err != nil {
@@ -171,7 +156,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			e = true
 		case "0", "false", "f", "no":
 		default:
-			sendResponse(o, m.Chat.ID, m.MessageID, invalidDeleteValue)
+			sendResponse(o, m.Chat.ID, m.MessageID, "Sorry I don't recognize that option value.\n\nThe correct usage should be \"/swap-delete <true|false|1|0|yes|no>\"")
 			return
 		}
 		if _, err := s.sql.ExecContext(x, "set_opt_delete", m.Chat.ID, e); err != nil {
@@ -185,7 +170,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 	case "timeout":
 		v, err := strconv.ParseUint(l[d+1:], 10, 16)
 		if err != nil || v > 65536 {
-			sendResponse(o, m.Chat.ID, m.MessageID, invalidTimeoutValue)
+			sendResponse(o, m.Chat.ID, m.MessageID, "Sorry I don't recognize that option value.\n\nThe correct usage should be \"/swap-timeout <number of seconds (0 - 65535)>\"")
 			return
 		}
 		if _, err := s.sql.ExecContext(x, "set_opt_timeout", m.Chat.ID, v); err != nil {

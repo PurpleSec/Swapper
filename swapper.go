@@ -60,8 +60,8 @@ func (s *Swapper) Run() error {
 	signal.Notify(o, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	x, s.cancel = context.WithCancel(context.Background())
 	s.log.Info("Swapper Telegram Bot Started, spinning up threads...")
-	go s.threadSend(x, &g, m)
-	go s.threadReceive(x, &g, m, r)
+	go s.send(x, &g, m)
+	go s.receive(x, &g, m, r)
 	for {
 		select {
 		case <-o:
@@ -123,21 +123,17 @@ func NewOptions(s string, empty bool) (*Swapper, error) {
 	if err = d.Ping(); err != nil {
 		return nil, &errval{s: `database connection "` + c.Database.Server + `" failed`, e: err}
 	}
+	m := mapper.New(d)
 	if d.SetConnMaxLifetime(c.Database.Timeout); empty {
-		for i := range cleanStatements {
-			if _, err := d.Exec(cleanStatements[i]); err != nil {
-				d.Close()
-				return nil, &errval{s: "could not clean up database schema", e: err}
-			}
+		if err = m.Batch(cleanStatements); err != nil {
+			m.Close()
+			return nil, &errval{s: "could not clean up database schema", e: err}
 		}
 	}
-	for i := range setupStatements {
-		if _, err := d.Exec(setupStatements[i]); err != nil {
-			d.Close()
-			return nil, &errval{s: "could not set up database schema", e: err}
-		}
+	if err = m.Batch(setupStatements); err != nil {
+		m.Close()
+		return nil, &errval{s: "could not set up database schema", e: err}
 	}
-	m := &mapper.Map{Database: d}
 	if err = m.Extend(queryStatements); err != nil {
 		m.Close()
 		return nil, &errval{s: "could not set up database schema", e: err}

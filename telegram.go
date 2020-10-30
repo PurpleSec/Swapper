@@ -68,7 +68,7 @@ func (s *Swapper) update(i int64, a, t uint16) {
 		l.count, l.free = 0, time.Now().Add(l.gap)
 	}
 }
-func (s *Swapper) swapInline(x context.Context, m *telegram.InlineQuery) []interface{} {
+func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []interface{} {
 	if len(m.Query) < 3 || len(m.Query) > 16 {
 		return nil
 	}
@@ -95,6 +95,21 @@ func (s *Swapper) swapInline(x context.Context, m *telegram.InlineQuery) []inter
 	}
 	s.log.Trace("Found an inline swap match %q by %s!", v, m.From.String())
 	return o
+}
+func (s *Swapper) send(x context.Context, g *sync.WaitGroup, o <-chan telegram.Chattable) {
+	s.log.Debug("Starting Telegram sender thread...")
+	for g.Add(1); ; {
+		select {
+		case n := <-o:
+			if _, err := s.bot.Send(n); err != nil {
+				s.log.Error(`Error sending Telegram message to chat: %s!`, err.Error())
+			}
+		case <-x.Done():
+			s.log.Debug("Stopping Telegram sender thread.")
+			g.Done()
+			return
+		}
+	}
 }
 func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram.Chattable) {
 	if m.From.IsBot || len(m.Text) == 0 || len(m.Text) < 3 || len(m.Text) > 16 || m.Text[0] == '/' || m.Text[0] < 33 {
@@ -142,29 +157,14 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 	}
 	o <- telegram.NewMessage(m.Chat.ID, "Swapped message from "+v)
 }
-func (s *Swapper) threadSend(x context.Context, g *sync.WaitGroup, o <-chan telegram.Chattable) {
-	s.log.Debug("Starting Telegram sender thread...")
-	for g.Add(1); ; {
-		select {
-		case n := <-o:
-			if _, err := s.bot.Send(n); err != nil {
-				s.log.Error(`Error sending Telegram message to chat: %s!`, err.Error())
-			}
-		case <-x.Done():
-			s.log.Debug("Stopping Telegram sender thread.")
-			g.Done()
-			return
-		}
-	}
-}
-func (s *Swapper) threadReceive(x context.Context, g *sync.WaitGroup, o chan<- telegram.Chattable, r <-chan telegram.Update) {
+func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegram.Chattable, r <-chan telegram.Update) {
 	s.log.Debug("Starting Telegram receiver thread...")
 	for g.Add(1); ; {
 		select {
 		case n := <-r:
 			if n.InlineQuery != nil {
 				c := telegram.InlineConfig{
-					Results:       s.swapInline(x, n.InlineQuery),
+					Results:       s.inline(x, n.InlineQuery),
 					CacheTime:     30,
 					IsPersonal:    true,
 					InlineQueryID: n.InlineQuery.ID,
@@ -173,8 +173,7 @@ func (s *Swapper) threadReceive(x context.Context, g *sync.WaitGroup, o chan<- t
 					c.SwitchPMText = "Click here to add some Stickers!"
 					c.SwitchPMParameter = "new"
 				}
-				_, err := s.bot.AnswerInlineQuery(c)
-				if err != nil {
+				if _, err := s.bot.AnswerInlineQuery(c); err != nil {
 					s.log.Error("Received error during inline query response: %s!", err.Error())
 				}
 				break
@@ -183,7 +182,7 @@ func (s *Swapper) threadReceive(x context.Context, g *sync.WaitGroup, o chan<- t
 				break
 			}
 			if n.Message.Chat.IsPrivate() {
-				s.log.Trace("Received a command from %s!", n.Message.From.String())
+				s.log.Trace("Received a possible command from %s!", n.Message.From.String())
 				s.command(x, n.Message, o)
 				break
 			}

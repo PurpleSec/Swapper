@@ -24,7 +24,8 @@ import (
 	telegram "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-const helpMessage = `I'm sorry I don't recognize that command.
+const (
+	helpMessage = `I'm sorry I don't recognize that command.
 You can use the following commands:
 
 /add <word> - Add a word to be swapped
@@ -34,7 +35,10 @@ You can use the following commands:
 /list - List all your swapped words
 /clear - Remove all your swapped words
 /help - More information about me!`
-const helpMessageExtra = `
+	errorMessage = `Sorry I've seem to have encountered an error.
+
+Please try again later.`
+	helpMessageExtra = `
 My name is StickerSwapBot!
 
 My job is to swap out the messages you send with your assigned stickers!
@@ -42,7 +46,7 @@ Use the "/add <word>" to tell me a word and then send a Sticker for me to swap i
 If I'm in a group that you're posting in, I will replace any of your set swap words.
 
 I can also be used inline (inside the message box)!
-Try this in any chat (I don't have to be in it) by entering @StickerSwapBot <word>
+Try this in any chat (I don't have to be in it) by entering @SwapItBot <word>
 
 If you're an Admin of a group and would like to use me, have no fear!
 I have some options that can set (per-group) to set limits on how many swaps I can do.
@@ -69,11 +73,13 @@ Here's the options that I have for Admins:
 /swap_enable <true|false|1|0|yes|no>
  - Master switch to enable or disable swapping messages in this chat.
 
-Please message my maintainers (@secfurry or @iDigitalFlame) for more info or questions!`
-const helpMessageBasic = `Hello there, I'm StickerSwapBot!
+Please message my maintainers (@secfurry or @iDigitalFlame) for more info or questions!
+
+My source code is located here: https://github.com/iDigitalFlame/swapper`
+	helpMessageBasic = `Hello there, I'm StickerSwapBot!
 
 I can swap or suggest stickers by a set word or parse!
-You can call me inline  (inside the message box) by entering @StickerSwapBot <word>
+You can call me inline  (inside the message box) by entering @SwapItBot <word>
 Or if I'm in a group chat, I can also automatically swap out words with stickers!
 
 I have the following commands:
@@ -85,14 +91,7 @@ I have the following commands:
 /list - List all your swapped words
 /clear - Remove all your swapped words
 /help - More information about me!`
-
-const errorMessage = `Sorry I've seem to have encountered an error.
-
-Please try again later.`
-const errorMessageSize = `Sorry, but swapped words must be at least 3 characters and limited to a max of 16 characters!`
-const invalidStickerValue = `Sorry, but I require a Sticker.
-
-Please invoke the command to try again.`
+)
 
 var builders = sync.Pool{
 	New: func() interface{} {
@@ -144,7 +143,7 @@ func (s *Swapper) sticker(x context.Context, m *telegram.Message) string {
 	}
 	delete(s.add, m.From.ID)
 	if m.Sticker == nil {
-		return invalidStickerValue
+		return "Sorry, but I require a Sticker.\n\nPlease invoke the command to try again."
 	}
 	if _, err := s.sql.ExecContext(x, "set_swap", m.From.ID, v, m.Sticker.FileID); err != nil {
 		s.log.Error("Received an error when attemping to add a user swap (UID: %d): %s!", m.From.ID, err.Error())
@@ -189,7 +188,7 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 		return
 	}
 	if len(v) > 16 || len(v) < 3 {
-		o <- telegram.NewMessage(m.Chat.ID, errorMessageSize)
+		o <- telegram.NewMessage(m.Chat.ID, "Sorry, but swapped words must be at least 3 characters and limited to a max of 16 characters!")
 		return
 	}
 	switch strings.ToLower(l[:d]) {

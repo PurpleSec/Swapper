@@ -29,7 +29,7 @@ var cleanStatements = []string{
 var setupStatements = []string{
 	`CREATE TABLE IF NOT EXISTS Mappings(
 		SwapID BIGINT(64) NOT NULL PRIMARY KEY AUTO_INCREMENT,
-		UserID BIGINT(64) NOT NULL,
+		UserID BIGINT(64) NOT NULL UNIQUE,
 		Keyword VARCHAR(16) NOT NULL,
 		StickerID VARCHAR(128) NOT NULL
 	)`,
