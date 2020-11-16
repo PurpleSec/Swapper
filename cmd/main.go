@@ -62,7 +62,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	s, err := swapper.NewOptions(file, empty)
+	s, err := swapper.New(file, empty)
 	if err != nil {
 		os.Stdout.WriteString("Error: " + err.Error() + "!\n")
 		os.Exit(1)

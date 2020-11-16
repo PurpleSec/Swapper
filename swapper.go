@@ -80,16 +80,10 @@ cleanup:
 	return s.sql.Close()
 }
 
-// New returns a new Watcher instance based on the passed config file path. This function will preform any
-// setup steps needed to start the Watcher. Once complete, use the 'Run' function to actually start the Swapper.
-func New(s string) (*Swapper, error) {
-	return NewOptions(s, false)
-}
-
-// NewOptions returns a new Swapper instance based on the passed config file path. This function will preform any
+// New returns a new Swapper instance based on the passed config file path. This function will preform any
 // setup steps needed to start the Swapper. Once complete, use the 'Run' function to actually start the Swapper.
 // This function allows for specifying the option to clear the database before starting.
-func NewOptions(s string, empty bool) (*Swapper, error) {
+func New(s string, empty bool) (*Swapper, error) {
 	var c config
 	j, err := ioutil.ReadFile(s)
 	if err != nil {
