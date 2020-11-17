@@ -35,12 +35,13 @@ import (
 // Swapper is a struct that contains the threads and config values that can be used to run the StickerSwap Telegram
 // bot. Use the 'NewSwapper' function to properly create a Swapper.
 type Swapper struct {
-	sql    *mapper.Map
-	bot    *telegram.BotAPI
-	log    logx.Log
-	add    map[int]string
-	cancel context.CancelFunc
-	limits map[int64]*limit
+	sql     *mapper.Map
+	bot     *telegram.BotAPI
+	log     logx.Log
+	add     map[int]string
+	cancel  context.CancelFunc
+	limits  map[int64]*limit
+	confirm map[int]struct{}
 }
 
 // Run will start the main Swapper process and all associated threads. This function will block until an
@@ -132,5 +133,12 @@ func New(s string, empty bool) (*Swapper, error) {
 		m.Close()
 		return nil, &errval{s: "could not set up database schema", e: err}
 	}
-	return &Swapper{sql: m, bot: b, log: l, add: make(map[int]string), limits: make(map[int64]*limit)}, nil
+	return &Swapper{
+		sql:     m,
+		bot:     b,
+		log:     l,
+		add:     make(map[int]string),
+		limits:  make(map[int64]*limit),
+		confirm: make(map[int]struct{}),
+	}, nil
 }

@@ -39,7 +39,7 @@ You can use the following commands:
 
 Please try again later.`
 	helpMessageExtra = `
-My name is StickerSwapBot!
+My name is SwapItBot!
 
 My job is to swap out the messages you send with your assigned stickers!
 Use the "/add <word>" to tell me a word and then send a Sticker for me to swap it with.
@@ -76,11 +76,12 @@ Here's the options that I have for Admins:
 Please message my maintainers (@secfurry or @iDigitalFlame) for more info or questions!
 
 My source code is located here: https://github.com/iDigitalFlame/swapper`
-	helpMessageBasic = `Hello there, I'm StickerSwapBot!
+	helpMessageBasic = `Hello there, I'm SwapItBot!
 
 I can swap or suggest stickers by a set word or parse!
 You can call me inline  (inside the message box) by entering @SwapItBot <word>
-Or if I'm in a group chat, I can also automatically swap out words with stickers!
+
+If I'm added in a group chat, I can automatically swap out words with stickers!
 
 I have the following commands:
 
@@ -98,6 +99,8 @@ var builders = sync.Pool{
 		return new(strings.Builder)
 	},
 }
+
+var confirm struct{}
 
 func (s *Swapper) list(x context.Context, i int) string {
 	r, err := s.sql.QueryContext(x, "list", i)
@@ -130,6 +133,7 @@ func (s *Swapper) list(x context.Context, i int) string {
 	return o
 }
 func (s *Swapper) clear(x context.Context, i int) string {
+
 	if _, err := s.sql.ExecContext(x, "clear", i); err != nil {
 		s.log.Error("Received an error when attemping to clear the user swaps (UID: %d): %s!", i, err.Error())
 		return errorMessage
@@ -156,6 +160,11 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 		o <- telegram.NewMessage(m.Chat.ID, s.sticker(x, m))
 		return
 	}
+	_, ok := s.confirm[m.From.ID]
+	if delete(s.confirm, m.From.ID); ok && strings.EqualFold(m.Text, "confirm") {
+		o <- telegram.NewMessage(m.Chat.ID, s.clear(x, m.From.ID))
+		return
+	}
 	var (
 		l = strings.TrimSpace(m.Text[1:])
 		d = strings.IndexByte(l, ' ')
@@ -169,7 +178,8 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 			o <- telegram.NewMessage(m.Chat.ID, s.list(x, m.From.ID))
 			return
 		case "clear":
-			o <- telegram.NewMessage(m.Chat.ID, s.clear(x, m.From.ID))
+			s.confirm[m.From.ID] = confirm
+			o <- telegram.NewMessage(m.Chat.ID, `Please reply with "confirm" in order to clear your list.`)
 			return
 		case "start":
 			o <- telegram.NewMessage(m.Chat.ID, helpMessageBasic)
