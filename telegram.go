@@ -178,7 +178,7 @@ func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegra
 				}
 				break
 			}
-			if n.Message == nil || n.Message.Chat == nil {
+			if n.Message == nil || n.Message.Chat == nil || len(n.Message.Text) == 0 {
 				break
 			}
 			if n.Message.Chat.IsPrivate() {
@@ -186,7 +186,7 @@ func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegra
 				s.command(x, n.Message, o)
 				break
 			}
-			if len(n.Message.Text) == 0 || n.Message.From.IsBot {
+			if n.Message.From.IsBot {
 				break
 			}
 			if len(n.Message.Text) > 6 && n.Message.Text[0] == '/' && stringMatchIndex(6, n.Message.Text, "/swap_") {

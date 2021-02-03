@@ -165,6 +165,10 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 		o <- telegram.NewMessage(m.Chat.ID, s.clear(x, m.From.ID))
 		return
 	}
+	if len(m.Text) <= 1 {
+		o <- telegram.NewMessage(m.Chat.ID, helpMessage)
+		return
+	}
 	var (
 		l = strings.TrimSpace(m.Text[1:])
 		d = strings.IndexByte(l, ' ')
