@@ -1,4 +1,4 @@
-module github.com/iDigitalFlame/swapper
+module github.com/PurpleSec/swapper
 
 go 1.15
 
