@@ -1,4 +1,4 @@
-// Copyright (C) 2020 iDigitalFlame
+// Copyright (C) 2021 PurpleSec Team
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -75,7 +75,7 @@ Here's the options that I have for Admins:
 
 Please message my maintainers (@secfurry or @iDigitalFlame) for more info or questions!
 
-My source code is located here: https://github.com/iDigitalFlame/swapper`
+My source code is located here: https://github.com/PurpleSec/swapper`
 	helpMessageBasic = `Hello there, I'm SwapItBot!
 
 I can swap or suggest stickers by a set word or parse!

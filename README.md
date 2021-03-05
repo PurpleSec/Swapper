@@ -9,7 +9,7 @@ stickers via names or parses.
 
 ```[text]
 Sticker Swapper Telegram Bot
-iDigitalFlame 2020 (idigitalflame.com)
+Purple Security (losynth.com/purple) 2021
 
 Usage:
   -h              Print this help menu.

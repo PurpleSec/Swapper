@@ -1,4 +1,4 @@
-// Copyright (C) 2020 iDigitalFlame
+// Copyright (C) 2021 PurpleSec Team
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -20,11 +20,11 @@ import (
 	"flag"
 	"os"
 
-	"github.com/iDigitalFlame/swapper"
+	"github.com/PurpleSec/swapper"
 )
 
 const usage = `Sticker Swapper Telegram Bot
-iDigitalFlame 2020 (idigitalflame.com)
+Purple Security (losynth.com/purple) 2021
 
 Usage:
   -h              Print this help menu.
