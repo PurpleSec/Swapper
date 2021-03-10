@@ -30,13 +30,13 @@ import (
 // https://github.com/go-telegram-bot-api/telegram-bot-api/blob/05e04b526c693e3e104feaa0be23611836af3dcc/helpers.go#L575
 // Since the standard API doesn't have it and the newer 'v5' versions are wonky as hell.
 type sticker struct {
-	Type                string                         `json:"type"`
+	InputMessageContent interface{}                    `json:"input_message_content,omitempty"`
+	ReplyMarkup         *telegram.InlineKeyboardMarkup `json:"reply_markup,omitempty"`
 	ID                  string                         `json:"id"`
 	StickerID           string                         `json:"sticker_file_id"`
 	Title               string                         `json:"title"`
 	ParseMode           string                         `json:"parse_mode"`
-	ReplyMarkup         *telegram.InlineKeyboardMarkup `json:"reply_markup,omitempty"`
-	InputMessageContent interface{}                    `json:"input_message_content,omitempty"`
+	Type                string                         `json:"type"`
 }
 
 func (s *Swapper) check(i int64) bool {

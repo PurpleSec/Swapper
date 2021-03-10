@@ -1,7 +1,7 @@
-github.com/PurpleSec/logx v1.0.0 h1:gffIzRnADlWxzblLF0auhNjfWCl2CJsbF8Tb8O3of+U=
-github.com/PurpleSec/logx v1.0.0/go.mod h1:tkLK6CqkhkRSVejDMVgZa0jTq97aRikVNjAON9iUiK0=
-github.com/PurpleSec/mapper v1.2.0 h1:DKI8It3Ws1Lq2nq2GQJkJKjUOOxmzihnapNZ1WA4dpc=
-github.com/PurpleSec/mapper v1.2.0/go.mod h1:JG1Dz4MqBCLDqTLp+k9l9eDLEGU3Ed16iFpzx5yb3oI=
+github.com/PurpleSec/logx v0.1.0 h1:MF6VEorvztx16SUwOfCcGRqx8aj9gj3UTqmMQOF00i0=
+github.com/PurpleSec/logx v0.1.0/go.mod h1:tkLK6CqkhkRSVejDMVgZa0jTq97aRikVNjAON9iUiK0=
+github.com/PurpleSec/mapper v0.1.0 h1:2ur9HYICJWUkwkq/5jLofk/XBHF95XNTnNLpmFRXb+w=
+github.com/PurpleSec/mapper v0.1.0/go.mod h1:JG1Dz4MqBCLDqTLp+k9l9eDLEGU3Ed16iFpzx5yb3oI=
 github.com/go-sql-driver/mysql v1.5.0 h1:ozyZYNQW3x3HtqT1jira07DN2PArx2v7/mN66gGcHOs=
 github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible h1:2cauKuaELYAEARXRkq2LrJ0yDDv1rW7+wrTEdVL3uaU=

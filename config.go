@@ -55,16 +55,16 @@ type errval struct {
 	s string
 }
 type config struct {
-	Log      log      `json:"log"`
-	Telegram string   `json:"telegram_key"`
 	Database database `json:"db"`
+	Telegram string   `json:"telegram_key"`
+	Log      log      `json:"log"`
 }
 type database struct {
 	Name     string        `json:"database"`
 	Server   string        `json:"host"`
-	Timeout  time.Duration `json:"timeout"`
 	Username string        `json:"user"`
 	Password string        `json:"password"`
+	Timeout  time.Duration `json:"timeout"`
 }
 
 func (e errval) Error() string {
