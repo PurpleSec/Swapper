@@ -23,7 +23,9 @@ import (
 	"github.com/PurpleSec/swapper"
 )
 
-const usage = `Sticker Swapper Telegram Bot
+const version = "v1.0.0"
+
+const usage = `Sticker Swapper Telegram Bot ` + version + `
 Purple Security (losynth.com/purple) 2021
 
 Usage:
@@ -35,7 +37,7 @@ Usage:
 
 func main() {
 	var (
-		args        = flag.NewFlagSet("Sticker Swapper Telegram Bot", flag.ExitOnError)
+		args        = flag.NewFlagSet("Sticker Swapper Telegram Bot "+version, flag.ExitOnError)
 		file        string
 		dump, empty bool
 	)
