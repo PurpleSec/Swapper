@@ -23,7 +23,7 @@ import (
 	"github.com/PurpleSec/swapper"
 )
 
-const version = "v1.0.0"
+const version = "v1.0.1"
 
 const usage = `Sticker Swapper Telegram Bot ` + version + `
 Purple Security (losynth.com/purple) 2021
