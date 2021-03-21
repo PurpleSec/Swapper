@@ -30,13 +30,13 @@ import (
 // https://github.com/go-telegram-bot-api/telegram-bot-api/blob/05e04b526c693e3e104feaa0be23611836af3dcc/helpers.go#L575
 // Since the standard API doesn't have it and the newer 'v5' versions are wonky as hell.
 type sticker struct {
-	InputMessageContent interface{}                    `json:"input_message_content,omitempty"`
-	ReplyMarkup         *telegram.InlineKeyboardMarkup `json:"reply_markup,omitempty"`
-	ID                  string                         `json:"id"`
-	StickerID           string                         `json:"sticker_file_id"`
-	Title               string                         `json:"title"`
-	ParseMode           string                         `json:"parse_mode"`
-	Type                string                         `json:"type"`
+	ID                  string      `json:"id"`
+	Type                string      `json:"type"`
+	Title               string      `json:"title"`
+	ParseMode           string      `json:"parse_mode"`
+	StickerID           string      `json:"sticker_file_id"`
+	ReplyMarkup         interface{} `json:"reply_markup,omitempty"`
+	InputMessageContent interface{} `json:"input_message_content,omitempty"`
 }
 
 func (s *Swapper) check(i int64) bool {
@@ -75,6 +75,7 @@ func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []interface
 	r, err := s.sql.QueryContext(x, "inline", m.From.ID, strings.TrimSpace(m.Query)+"%")
 	if err != nil {
 		s.log.Error("Received an error attemting to get the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
+		return nil
 	}
 	var (
 		v string
@@ -151,10 +152,10 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 			s.log.Warning("Received an error attempting to delete a message from GID %s: %s", m.Chat.ID, err.Error())
 		}
 	}
-	o <- n
 	if v = "@" + m.From.UserName; len(v) <= 1 {
 		v = m.From.String()
 	}
+	o <- n
 	o <- telegram.NewMessage(m.Chat.ID, "Swapped message from "+v)
 }
 func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegram.Chattable, r <-chan telegram.Update) {
@@ -170,19 +171,18 @@ func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegra
 					InlineQueryID: n.InlineQuery.ID,
 				}
 				if len(c.Results) == 0 {
-					c.SwitchPMText = "Click here to add some Stickers!"
-					c.SwitchPMParameter = "new"
+					c.SwitchPMParameter, c.SwitchPMText = "new", "Click here to add some Stickers!"
 				}
 				if _, err := s.bot.AnswerInlineQuery(c); err != nil {
 					s.log.Error("Received error during inline query response: %s!", err.Error())
 				}
 				break
 			}
-			if n.Message == nil || n.Message.Chat == nil || len(n.Message.Text) == 0 {
+			if n.Message == nil || n.Message.Chat == nil || (len(n.Message.Text) == 0 && n.Message.Sticker == nil) {
 				break
 			}
 			if n.Message.Chat.IsPrivate() {
-				s.log.Trace("Received a possible command from %s!", n.Message.From.String())
+				s.log.Trace("Received a possible command/sticker from %s!", n.Message.From.String())
 				s.command(x, n.Message, o)
 				break
 			}
