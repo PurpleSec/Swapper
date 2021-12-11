@@ -1,4 +1,4 @@
-// Copyright (C) 2021 PurpleSec Team
+// Copyright (C) 2021 - 2022 PurpleSec Team
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -28,15 +28,17 @@ import (
 
 // Shamelessly copied from:
 // https://github.com/go-telegram-bot-api/telegram-bot-api/blob/05e04b526c693e3e104feaa0be23611836af3dcc/helpers.go#L575
-// Since the standard API doesn't have it and the newer 'v5' versions are wonky as hell.
+//
+// Since the standard API doesn't have it and the newer 'v5' versions are wonky
+// as hell.
 type sticker struct {
-	ID                  string      `json:"id"`
+	InputMessageContent interface{} `json:"input_message_content,omitempty"`
+	ReplyMarkup         interface{} `json:"reply_markup,omitempty"`
 	Type                string      `json:"type"`
 	Title               string      `json:"title"`
 	ParseMode           string      `json:"parse_mode"`
 	StickerID           string      `json:"sticker_file_id"`
-	ReplyMarkup         interface{} `json:"reply_markup,omitempty"`
-	InputMessageContent interface{} `json:"input_message_content,omitempty"`
+	ID                  string      `json:"id"`
 }
 
 func (s *Swapper) check(i int64) bool {

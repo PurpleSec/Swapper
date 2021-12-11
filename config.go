@@ -1,4 +1,4 @@
-// Copyright (C) 2021 PurpleSec Team
+// Copyright (C) 2021 - 2022 PurpleSec Team
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -17,13 +17,15 @@
 package swapper
 
 import (
+	"errors"
 	"time"
 
 	// Import for the Golang MySQL driver
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// Defaults is a string representation of a JSON formatted default configuration for a Watcher instance.
+// Defaults is a string representation of a JSON formatted default configuration
+// for a Watcher instance.
 const Defaults = `{
 	"db": {
 		"host": "tcp(localhost:3306)",
@@ -50,10 +52,6 @@ type limit struct {
 	max   uint16
 	count uint16
 }
-type errval struct {
-	e error
-	s string
-}
 type config struct {
 	Database database `json:"db"`
 	Telegram string   `json:"telegram_key"`
@@ -67,21 +65,15 @@ type database struct {
 	Timeout  time.Duration `json:"timeout"`
 }
 
-func (e errval) Error() string {
-	if e.e == nil {
-		return e.s
-	}
-	return e.s + ": " + e.e.Error()
-}
 func (c *config) check() error {
 	if len(c.Database.Name) == 0 {
-		return &errval{s: "missing database name"}
+		return errors.New("missing database name")
 	}
 	if len(c.Database.Server) == 0 {
-		return &errval{s: "missing database server"}
+		return errors.New("missing database server")
 	}
 	if len(c.Database.Username) == 0 {
-		return &errval{s: "missing database username"}
+		return errors.New("missing database username")
 	}
 	if c.Database.Timeout == 0 {
 		c.Database.Timeout = time.Minute * 3

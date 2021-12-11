@@ -1,4 +1,4 @@
-// Copyright (C) 2021 PurpleSec Team
+// Copyright (C) 2021 - 2022 PurpleSec Team
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -133,7 +133,6 @@ func (s *Swapper) list(x context.Context, i int) string {
 	return o
 }
 func (s *Swapper) clear(x context.Context, i int) string {
-
 	if _, err := s.sql.ExecContext(x, "clear", i); err != nil {
 		s.log.Error("Received an error when attemping to clear the user swaps (UID: %d): %s!", i, err.Error())
 		return errorMessage

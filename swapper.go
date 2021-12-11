@@ -1,4 +1,4 @@
-// Copyright (C) 2021 PurpleSec Team
+// Copyright (C) 2021 - 2022 PurpleSec Team
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -20,7 +20,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-	"io/ioutil"
+	"errors"
 	"os"
 	"os/signal"
 	"sync"
@@ -32,8 +32,10 @@ import (
 	telegram "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-// Swapper is a struct that contains the threads and config values that can be used to run the StickerSwap Telegram
-// bot. Use the 'NewSwapper' function to properly create a Swapper.
+// Swapper is a struct that contains the threads and config values that can be
+// used to run the StickerSwap Telegram bot.
+//
+// Use the 'NewSwapper' function to properly create a Swapper.
 type Swapper struct {
 	sql     *mapper.Map
 	bot     *telegram.BotAPI
@@ -44,13 +46,15 @@ type Swapper struct {
 	confirm map[int]struct{}
 }
 
-// Run will start the main Swapper process and all associated threads. This function will block until an
-// interrupt signal is received. This function returns any errors that occur during shutdown.
+// Run will start the main Swapper process and all associated threads. This
+// function will block until an interrupt signal is received.
+//
+// This function returns any errors that occur during shutdown.
 func (s *Swapper) Run() error {
 	r, err := s.bot.GetUpdatesChan(telegram.UpdateConfig{})
 	if err != nil {
 		s.sql.Close()
-		return &errval{s: "could not get Telegram receiver", e: err}
+		return errors.New("telegram receiver: " + err.Error())
 	}
 	var (
 		o = make(chan os.Signal, 1)
@@ -86,52 +90,52 @@ cleanup:
 // This function allows for specifying the option to clear the database before starting.
 func New(s string, empty bool) (*Swapper, error) {
 	var c config
-	j, err := ioutil.ReadFile(s)
+	j, err := os.ReadFile(s)
 	if err != nil {
-		return nil, &errval{s: `error reading config file "` + s + `"`, e: err}
+		return nil, errors.New(`reading config "` + s + `": ` + err.Error())
 	}
-	if err := json.Unmarshal(j, &c); err != nil {
-		return nil, &errval{s: `error parsing config file "` + s + `"`, e: err}
+	if err = json.Unmarshal(j, &c); err != nil {
+		return nil, errors.New(`parsing config "` + s + `": ` + err.Error())
 	}
-	if err := c.check(); err != nil {
+	if err = c.check(); err != nil {
 		return nil, err
 	}
 	l := logx.Multiple(logx.Console(logx.Level(c.Log.Level)))
 	if len(c.Log.File) > 0 {
-		f, err := logx.File(c.Log.File, logx.Append, logx.Level(c.Log.Level))
-		if err != nil {
-			return nil, &errval{s: `error setting up log file "` + c.Log.File + `"`, e: err}
+		f, err2 := logx.File(c.Log.File, logx.Append, logx.Level(c.Log.Level))
+		if err2 != nil {
+			return nil, errors.New(`log file "` + c.Log.File + `": ` + err2.Error())
 		}
 		l.Add(f)
 	}
 	b, err := telegram.NewBotAPI(c.Telegram)
 	if err != nil {
-		return nil, &errval{s: "login to Telegram failed", e: err}
+		return nil, errors.New("telegram login: " + err.Error())
 	}
 	d, err := sql.Open(
 		"mysql",
 		c.Database.Username+":"+c.Database.Password+"@"+c.Database.Server+"/"+c.Database.Name+"?multiStatements=true&interpolateParams=true",
 	)
 	if err != nil {
-		return nil, &errval{s: `database connection "` + c.Database.Server + `" failed`, e: err}
+		return nil, errors.New(`database connection "` + c.Database.Server + `": ` + err.Error())
 	}
 	if err = d.Ping(); err != nil {
-		return nil, &errval{s: `database connection "` + c.Database.Server + `" failed`, e: err}
+		return nil, errors.New(`database connection "` + c.Database.Server + `": ` + err.Error())
 	}
 	m := mapper.New(d)
 	if d.SetConnMaxLifetime(c.Database.Timeout); empty {
 		if err = m.Batch(cleanStatements); err != nil {
 			m.Close()
-			return nil, &errval{s: "could not clean up database schema", e: err}
+			return nil, errors.New("clean up: " + err.Error())
 		}
 	}
 	if err = m.Batch(setupStatements); err != nil {
 		m.Close()
-		return nil, &errval{s: "could not set up database schema", e: err}
+		return nil, errors.New("database schema: " + err.Error())
 	}
 	if err = m.Extend(queryStatements); err != nil {
 		m.Close()
-		return nil, &errval{s: "could not set up database schema", e: err}
+		return nil, errors.New("database schema: " + err.Error())
 	}
 	return &Swapper{
 		sql:     m,
