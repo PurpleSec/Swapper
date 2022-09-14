@@ -87,7 +87,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 	if l == "swap_options" {
 		r, err := s.sql.QueryContext(x, "list_opt", m.Chat.ID)
 		if err != nil {
-			s.log.Error("Received an error when attemping to get group settings (GID: %d): %s!", m.Chat.ID, err.Error())
+			s.log.Error("Received an error when attempting to get group settings (GID: %d): %s!", m.Chat.ID, err.Error())
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
@@ -101,7 +101,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			}
 		}
 		if r.Close(); err != nil {
-			s.log.Error("Received an error when attemping to scan group settings (GID: %d): %s!", m.Chat.ID, err.Error())
+			s.log.Error("Received an error when attempting to scan group settings (GID: %d): %s!", m.Chat.ID, err.Error())
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
@@ -123,7 +123,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			return
 		}
 		if _, err := s.sql.ExecContext(x, "set_opt_limit", m.Chat.ID, v); err != nil {
-			s.log.Error("Received an error when attemping to set the limit setting (GID: %d): %s!", m.Chat.ID, err.Error())
+			s.log.Error("Received an error when attempting to set the limit setting (GID: %d): %s!", m.Chat.ID, err.Error())
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
@@ -142,7 +142,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			return
 		}
 		if _, err := s.sql.ExecContext(x, "set_opt_enable", m.Chat.ID, e); err != nil {
-			s.log.Error("Received an error when attemping to set enable setting (GID: %d): %s!", m.Chat.ID, err.Error())
+			s.log.Error("Received an error when attempting to set enable setting (GID: %d): %s!", m.Chat.ID, err.Error())
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
@@ -160,7 +160,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			return
 		}
 		if _, err := s.sql.ExecContext(x, "set_opt_delete", m.Chat.ID, e); err != nil {
-			s.log.Error("Received an error when attemping to set the delete setting (GID: %d): %s!", m.Chat.ID, err.Error())
+			s.log.Error("Received an error when attempting to set the delete setting (GID: %d): %s!", m.Chat.ID, err.Error())
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
@@ -174,7 +174,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			return
 		}
 		if _, err := s.sql.ExecContext(x, "set_opt_timeout", m.Chat.ID, v); err != nil {
-			s.log.Error("Received an error when attemping to set timeout setting (GID: %d): %s!", m.Chat.ID, err.Error())
+			s.log.Error("Received an error when attempting to set timeout setting (GID: %d): %s!", m.Chat.ID, err.Error())
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}

@@ -65,7 +65,7 @@ func (s *Swapper) update(i int64, a, t uint16) {
 		l = new(limit)
 		s.limits[i] = l
 	}
-	l.gap, l.max = time.Duration(time.Duration(t)*time.Second), a
+	l.gap, l.max = time.Duration(t)*time.Second, a
 	if time.Now().After(l.free) {
 		l.count, l.free = 0, time.Now().Add(l.gap)
 	}
@@ -76,7 +76,7 @@ func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []interface
 	}
 	r, err := s.sql.QueryContext(x, "inline", m.From.ID, strings.TrimSpace(m.Query)+"%")
 	if err != nil {
-		s.log.Error("Received an error attemting to get the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
+		s.log.Error("Received an error attempting to get the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
 		return nil
 	}
 	var (
@@ -90,7 +90,7 @@ func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []interface
 		o = append(o, sticker{ID: m.ID + "res" + strconv.Itoa(i), Type: "sticker", Title: m.Query, StickerID: v})
 	}
 	if r.Close(); err != nil {
-		s.log.Error("Received an error attemting to scan the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
+		s.log.Error("Received an error attempting to scan the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
 		return nil
 	}
 	if len(o) == 0 {
@@ -129,7 +129,7 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 	)
 	r, err := s.sql.QueryContext(x, "swap", m.From.ID, m.Chat.ID, strings.TrimSpace(m.Text))
 	if err != nil {
-		s.log.Error("Received an error attemting to get the sticker value for GID %d, UID: %d: %s!", m.Chat.ID, m.From.ID, err.Error())
+		s.log.Error("Received an error attempting to get the sticker value for GID %d, UID: %d: %s!", m.Chat.ID, m.From.ID, err.Error())
 	}
 	for r.Next() {
 		if err = r.Scan(&e, &a, &t, &p, &v); err != nil {
@@ -137,7 +137,7 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 		}
 	}
 	if r.Close(); err != nil {
-		s.log.Error("Received an error attemting to scan the sticker value for GID %d, UID: %d: %s!", m.Chat.ID, m.From.ID, err.Error())
+		s.log.Error("Received an error attempting to scan the sticker value for GID %d, UID: %d: %s!", m.Chat.ID, m.From.ID, err.Error())
 		return
 	}
 	if s.update(m.Chat.ID, a, t); !e || len(v) == 0 {

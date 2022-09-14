@@ -105,7 +105,7 @@ var confirm struct{}
 func (s *Swapper) list(x context.Context, i int) string {
 	r, err := s.sql.QueryContext(x, "list", i)
 	if err != nil {
-		s.log.Error("Received an error when attemping to list the user swaps (UID: %d): %s!", i, err.Error())
+		s.log.Error("Received an error when attempting to list the user swaps (UID: %d): %s!", i, err.Error())
 		return errorMessage
 	}
 	var (
@@ -115,7 +115,7 @@ func (s *Swapper) list(x context.Context, i int) string {
 	)
 	for b.WriteString("You are currently swapping the words:\n"); r.Next(); {
 		if err := r.Scan(&n); err != nil {
-			s.log.Error("Received an error when attemping to scan the user swaps (UID: %d): %s!", i, err.Error())
+			s.log.Error("Received an error when attempting to scan the user swaps (UID: %d): %s!", i, err.Error())
 			continue
 		}
 		if len(n) == 0 {
@@ -134,7 +134,7 @@ func (s *Swapper) list(x context.Context, i int) string {
 }
 func (s *Swapper) clear(x context.Context, i int) string {
 	if _, err := s.sql.ExecContext(x, "clear", i); err != nil {
-		s.log.Error("Received an error when attemping to clear the user swaps (UID: %d): %s!", i, err.Error())
+		s.log.Error("Received an error when attempting to clear the user swaps (UID: %d): %s!", i, err.Error())
 		return errorMessage
 	}
 	return "Sweet! I've cleared your swap list!"
@@ -149,7 +149,7 @@ func (s *Swapper) sticker(x context.Context, m *telegram.Message) string {
 		return "Sorry, but I require a Sticker.\n\nPlease invoke the command to try again."
 	}
 	if _, err := s.sql.ExecContext(x, "set_swap", m.From.ID, v, m.Sticker.FileID); err != nil {
-		s.log.Error("Received an error when attemping to add a user swap (UID: %d): %s!", m.From.ID, err.Error())
+		s.log.Error("Received an error when attempting to add a user swap (UID: %d): %s!", m.From.ID, err.Error())
 		return errorMessage
 	}
 	return `Sweet! I added the sticker to the swap word "` + v + `"!`
@@ -212,7 +212,7 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 	case "get":
 		r, err := s.sql.QueryContext(x, "get_swap", m.From.ID, v)
 		if err != nil {
-			s.log.Error("Received an error when attemping to get a user swap (UID: %d): %s!", m.From.ID, err.Error())
+			s.log.Error("Received an error when attempting to get a user swap (UID: %d): %s!", m.From.ID, err.Error())
 			o <- telegram.NewMessage(m.Chat.ID, errorMessage)
 			return
 		}
@@ -223,7 +223,7 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 			}
 		}
 		if r.Close(); err != nil {
-			s.log.Error("Received an error when attemping to scan a user swap (UID: %d): %s!", m.From.ID, err.Error())
+			s.log.Error("Received an error when attempting to scan a user swap (UID: %d): %s!", m.From.ID, err.Error())
 			o <- telegram.NewMessage(m.Chat.ID, errorMessage)
 			return
 		}
@@ -238,7 +238,7 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 		return
 	case "remove":
 		if _, err := s.sql.ExecContext(x, "del_swap", m.From.ID, v); err != nil {
-			s.log.Error("Received an error when attemping to del the user swap (UID: %d): %s!", m.From.ID, err.Error())
+			s.log.Error("Received an error when attempting to del the user swap (UID: %d): %s!", m.From.ID, err.Error())
 			o <- telegram.NewMessage(m.Chat.ID, errorMessage)
 			return
 		}
