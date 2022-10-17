@@ -228,7 +228,7 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 			return
 		}
 		if len(n) == 0 {
-			o <- telegram.NewMessage(m.Chat.ID, `You don't have a sticker mapped for "`+v+"`!")
+			o <- telegram.NewMessage(m.Chat.ID, `You don't have a sticker mapped for "`+v+`"!`)
 			return
 		}
 		o <- telegram.NewStickerShare(m.Chat.ID, n)
