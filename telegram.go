@@ -96,7 +96,7 @@ func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []interface
 	if len(o) == 0 {
 		return nil
 	}
-	s.log.Trace("Found an inline swap match %q by %s!", v, m.From.String())
+	s.log.Trace(`Found an inline swap match "%s" by %s!`, v, m.From.String())
 	return o
 }
 func (s *Swapper) send(x context.Context, g *sync.WaitGroup, o <-chan telegram.Chattable) {
@@ -143,7 +143,7 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 	if s.update(m.Chat.ID, a, t); !e || len(v) == 0 {
 		return
 	}
-	s.log.Trace("Found a swap match %q by %s!", v, m.From.String())
+	s.log.Trace(`Found a swap match "%s" by "%s"!`, v, m.From.String())
 	n := telegram.NewStickerShare(m.Chat.ID, v)
 	if m.ReplyToMessage != nil {
 		n.ReplyToMessageID = m.ReplyToMessage.MessageID

@@ -76,7 +76,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 		return
 	}
 	if u.Status != "administrator" && u.Status != "creator" {
-		s.log.Debug("Non-admin user %q attempted an Admin command in GID %d!", m.From.String(), m.Chat.ID)
+		s.log.Debug(`Non-admin user "%s" attempted an Admin command in GID %d!`, m.From.String(), m.Chat.ID)
 		return
 	}
 	l := strings.ToLower(strings.TrimSpace(m.Text[1:]))
@@ -127,7 +127,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
-		s.log.Trace(`Admin %q set the "swap_limit" to %q setting for GID %d!`, m.From.String(), l[d+1:], m.Chat.ID)
+		s.log.Trace(`Admin "%s" set the "swap_limit" to "%s" setting for GID %d!`, m.From.String(), l[d+1:], m.Chat.ID)
 		delete(s.limits, m.Chat.ID)
 		sendResponse(o, m.Chat.ID, m.MessageID, `Awesome! I've updated the "swap_limit" setting to `+l[d+1:]+` swaps!`)
 		return
@@ -146,7 +146,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
-		s.log.Trace(`Admin %q set the "swap_enable" to %t setting for GID %d!`, m.From.String(), e, m.Chat.ID)
+		s.log.Trace(`Admin "%s" set the "swap_enable" to %t setting for GID %d!`, m.From.String(), e, m.Chat.ID)
 		sendResponse(o, m.Chat.ID, m.MessageID, `Sweet! I've updated the "swap_enable" setting to "`+strconv.FormatBool(e)+`"!`)
 		return
 	case "delete":
@@ -164,7 +164,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
-		s.log.Trace(`Admin %q set the "swap_delete" to %t setting for GID %d!`, m.From.String(), e, m.Chat.ID)
+		s.log.Trace(`Admin "%s" set the "swap_delete" to %t setting for GID %d!`, m.From.String(), e, m.Chat.ID)
 		sendResponse(o, m.Chat.ID, m.MessageID, `Sweet! I've updated the "swap_delete" setting to "`+strconv.FormatBool(e)+`"!`)
 		return
 	case "timeout":
@@ -178,7 +178,7 @@ func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegr
 			sendResponse(o, m.Chat.ID, m.MessageID, errorMessageAdmin)
 			return
 		}
-		s.log.Trace(`Admin %q set the "swap_timeout" to %q setting for GID %d!`, m.From.String(), l[d+1:], m.Chat.ID)
+		s.log.Trace(`Admin "%s" set the "swap_timeout" to "%s" setting for GID %d!`, m.From.String(), l[d+1:], m.Chat.ID)
 		delete(s.limits, m.Chat.ID)
 		sendResponse(o, m.Chat.ID, m.MessageID, `Sweet! I've updated the "swap_timeout" setting to `+l[d+1:]+` seconds!`)
 		return
