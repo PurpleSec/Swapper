@@ -100,7 +100,7 @@ func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []interface
 	return o
 }
 func (s *Swapper) send(x context.Context, g *sync.WaitGroup, o <-chan telegram.Chattable) {
-	s.log.Debug("Starting Telegram sender thread...")
+	s.log.Debug("Starting Telegram sender thread..")
 	for g.Add(1); ; {
 		select {
 		case n := <-o:
@@ -149,7 +149,7 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 		n.ReplyToMessageID = m.ReplyToMessage.MessageID
 	}
 	if p {
-		s.log.Trace("Attempting to delete the swapped message %d...", m.MessageID)
+		s.log.Trace("Attempting to delete the swapped message %d..", m.MessageID)
 		if _, err = s.bot.DeleteMessage(telegram.DeleteMessageConfig{ChatID: m.Chat.ID, MessageID: m.MessageID}); err != nil {
 			s.log.Warning("Received an error attempting to delete a message from GID %s: %s", m.Chat.ID, err.Error())
 		}
@@ -161,7 +161,7 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 	o <- telegram.NewMessage(m.Chat.ID, "Swapped message from "+v)
 }
 func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegram.Chattable, r <-chan telegram.Update) {
-	s.log.Debug("Starting Telegram receiver thread...")
+	s.log.Debug("Starting Telegram receiver thread..")
 	for g.Add(1); ; {
 		select {
 		case n := <-r:
