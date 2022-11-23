@@ -18,6 +18,7 @@ package swapper
 
 import (
 	"context"
+	"database/sql"
 	"strconv"
 	"strings"
 	"sync"
@@ -32,13 +33,9 @@ import (
 // Since the standard API doesn't have it and the newer 'v5' versions are wonky
 // as hell.
 type sticker struct {
-	InputMessageContent interface{} `json:"input_message_content,omitempty"`
-	ReplyMarkup         interface{} `json:"reply_markup,omitempty"`
-	Type                string      `json:"type"`
-	Title               string      `json:"title"`
-	ParseMode           string      `json:"parse_mode"`
-	StickerID           string      `json:"sticker_file_id"`
-	ID                  string      `json:"id"`
+	ID      string `json:"id"`
+	Type    string `json:"type"`
+	Sticker string `json:"sticker_file_id"`
 }
 
 func (s *Swapper) check(i int64) bool {
@@ -70,24 +67,32 @@ func (s *Swapper) update(i int64, a, t uint16) {
 		l.count, l.free = 0, time.Now().Add(l.gap)
 	}
 }
-func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []interface{} {
-	if len(m.Query) < 3 || len(m.Query) > 16 {
+func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []any {
+	if len(m.Query) < 1 || len(m.Query) > 16 {
 		return nil
 	}
-	r, err := s.sql.QueryContext(x, "inline", m.From.ID, strings.TrimSpace(m.Query)+"%")
+	var (
+		r   *sql.Rows
+		err error
+	)
+	if m.Query == "*" {
+		r, err = s.sql.QueryContext(x, "inline_all", m.From.ID)
+	} else {
+		r, err = s.sql.QueryContext(x, "inline", m.From.ID, strings.TrimSpace(m.Query)+"%")
+	}
 	if err != nil {
 		s.log.Error("Received an error attempting to get the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
 		return nil
 	}
 	var (
 		v string
-		o []interface{}
+		o []any
 	)
-	for i := 0; r.Next(); i++ {
+	for i := 0; r.Next() && i < 50; i++ {
 		if err = r.Scan(&v); err != nil {
 			break
 		}
-		o = append(o, sticker{ID: m.ID + "res" + strconv.Itoa(i), Type: "sticker", Title: m.Query, StickerID: v})
+		o = append(o, sticker{ID: m.ID + "res" + strconv.Itoa(i), Type: "sticker", Sticker: v})
 	}
 	if r.Close(); err != nil {
 		s.log.Error("Received an error attempting to scan the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
@@ -168,7 +173,7 @@ func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegra
 			if n.InlineQuery != nil {
 				c := telegram.InlineConfig{
 					Results:       s.inline(x, n.InlineQuery),
-					CacheTime:     30,
+					CacheTime:     180,
 					IsPersonal:    true,
 					InlineQueryID: n.InlineQuery.ID,
 				}

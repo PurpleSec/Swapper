@@ -140,13 +140,12 @@ func (s *Swapper) clear(x context.Context, i int) string {
 	return "Sweet! I've cleared your swap list!"
 }
 func (s *Swapper) sticker(x context.Context, m *telegram.Message) string {
-	v, ok := s.add[m.From.ID]
-	if !ok {
-		return helpMessage
+	if delete(s.confirm, m.From.ID); m.Sticker == nil {
+		return "Sorry, but I require a Sticker.\n\nPlease invoke the previous command to try again."
 	}
-	delete(s.add, m.From.ID)
-	if m.Sticker == nil {
-		return "Sorry, but I require a Sticker.\n\nPlease invoke the command to try again."
+	v, ok := s.add[m.From.ID]
+	if delete(s.add, m.From.ID); !ok {
+		return helpMessage
 	}
 	if _, err := s.sql.ExecContext(x, "set_swap", m.From.ID, v, m.Sticker.FileID); err != nil {
 		s.log.Error("Received an error when attempting to add a user swap (UID: %d): %s!", m.From.ID, err.Error())
@@ -164,7 +163,7 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 		o <- telegram.NewMessage(m.Chat.ID, s.clear(x, m.From.ID))
 		return
 	}
-	if len(m.Text) <= 1 {
+	if delete(s.add, m.From.ID); len(m.Text) <= 1 {
 		o <- telegram.NewMessage(m.Chat.ID, helpMessage)
 		return
 	}
@@ -172,23 +171,20 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 		l = strings.TrimSpace(m.Text[1:])
 		d = strings.IndexByte(l, ' ')
 	)
-	if delete(s.add, m.From.ID); d == -1 {
+	if d == -1 {
 		switch strings.ToLower(l) {
 		case "help":
 			o <- telegram.NewMessage(m.Chat.ID, helpMessageExtra)
-			return
 		case "list":
 			o <- telegram.NewMessage(m.Chat.ID, s.list(x, m.From.ID))
-			return
 		case "clear":
 			s.confirm[m.From.ID] = confirm
 			o <- telegram.NewMessage(m.Chat.ID, `Please reply with "confirm" in order to clear your list.`)
-			return
 		case "start":
 			o <- telegram.NewMessage(m.Chat.ID, helpMessageBasic)
-			return
+		default:
+			o <- telegram.NewMessage(m.Chat.ID, helpMessage)
 		}
-		o <- telegram.NewMessage(m.Chat.ID, helpMessage)
 		return
 	}
 	if d < 3 {
@@ -242,7 +238,7 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 			o <- telegram.NewMessage(m.Chat.ID, errorMessage)
 			return
 		}
-		o <- telegram.NewMessage(m.Chat.ID, `Sweet! I've remove the swap word "`+v+`"!`)
+		o <- telegram.NewMessage(m.Chat.ID, `Sweet! I've removed the swap word "`+v+`" (if it existed)!`)
 		return
 	}
 	o <- telegram.NewMessage(m.Chat.ID, helpMessage)

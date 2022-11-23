@@ -1,6 +1,6 @@
 module github.com/PurpleSec/swapper
 
-go 1.17
+go 1.18
 
 require (
 	github.com/PurpleSec/logx v1.6.1
