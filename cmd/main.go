@@ -59,7 +59,7 @@ func main() {
 	}
 
 	if ver {
-		os.Stdout.WriteString("StickerSwap: " + version + "_" + buildVersion)
+		os.Stdout.WriteString("StickerSwap: " + version + "_" + buildVersion + "\n")
 		os.Exit(0)
 	}
 
