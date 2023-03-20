@@ -31,7 +31,8 @@ var setupStatements = []string{
 		SwapID BIGINT(64) NOT NULL PRIMARY KEY AUTO_INCREMENT,
 		UserID BIGINT(64) NOT NULL UNIQUE,
 		Keyword VARCHAR(16) NOT NULL,
-		StickerID VARCHAR(128) NOT NULL
+		StickerID VARCHAR(128) NOT NULL,
+		StickerUID VARCHAR(128) NULL
 	)`,
 	`CREATE TABLE IF NOT EXISTS Settings(
 		GroupID BIGINT(64) NOT NULL PRIMARY KEY,
@@ -40,6 +41,8 @@ var setupStatements = []string{
 		Remove BOOLEAN NOT NULL DEFAULT TRUE,
 		Enabled BOOLEAN NOT NULL DEFAULT TRUE
 	)`,
+	`ALTER TABLE Mappings ADD COLUMN IF NOT EXISTS (StickerUID VARCHAR(128) NULL)`,
+	`DROP PROCEDURE IF EXISTS SetSticker`,
 	`CREATE PROCEDURE IF NOT EXISTS SetSettingLimit(GID BIGINT(64), Amount INT(16))
 	BEGIN
 		SET @gid = COALESCE((SELECT GroupID FROM Settings WHERE GroupID = GID LIMIT 1), 0);
@@ -85,13 +88,13 @@ var setupStatements = []string{
 		SELECT Enabled, Amount, Timeout, Remove, COALESCE((SELECT StickerID FROM Mappings WHERE UserID = User AND Keyword = Word LIMIT 1), "") As StickerID
 			FROM Settings WHERE GroupID = GID;
 	END;`,
-	`CREATE PROCEDURE IF NOT EXISTS SetSticker(User BIGINT(64), Word VARCHAR(16), Sticker VARCHAR(128))
+	`CREATE PROCEDURE IF NOT EXISTS SetSticker(User BIGINT(64), Word VARCHAR(16), Sticker VARCHAR(128), SID VARCHAR(128))
 	BEGIN
 		SET @sid = COALESCE((SELECT SwapID FROM Mappings WHERE UserID = User AND Keyword = Word LIMIT 1), 0);
 		IF @sid > 0 THEN
-			UPDATE Mappings SET StickerID = Sticker WHERE SwapID = @sid;
+			UPDATE Mappings SET StickerID = Sticker, StickerUID = SID WHERE SwapID = @sid;
 		ELSE
-			INSERT INTO Mappings(UserID, StickerID, Keyword) VALUES(User, Sticker, Word);
+			INSERT INTO Mappings(UserID, StickerID, StickerUID, Keyword) VALUES(User, Sticker, SID, Word);
 		END IF;
 	END;`,
 }
@@ -102,13 +105,14 @@ var queryStatements = map[string]string{
 	"clear":            `DELETE FROM Mappings where UserID = ?`,
 	"inline":           `SELECT StickerID FROM Mappings WHERE UserID = ? AND Keyword LIKE ?`,
 	"get_swap":         `SELECT StickerID FROM Mappings WHERE UserID = ? AND Keyword = ?`,
-	"set_swap":         `CALL SetSticker(?, ?, ?)`,
+	"set_swap":         `CALL SetSticker(?, ?, ?, ?)`,
 	"del_swap":         `DELETE FROM Mappings WHERE UserID = ? AND Keyword = ?`,
 	"list_opt":         `SELECT Enabled, Amount, Timeout, Remove FROM Settings WHERE GroupID = ?`,
 	"inline_all":       `SELECT StickerID FROM Mappings WHERE UserID = ?`,
+	"check_swap":       `SELECT Keyword FROM Mappings WHERE UserID = ? AND StickerUID = ?`,
 	"set_opt_limit":    `CALL SetSettingLimit(?, ?)`,
 	"set_opt_delete":   `CALL SetSettingDelete(?, ?)`,
 	"set_opt_enable":   `CALL SetSettingEnabled(?, ?)`,
 	"set_opt_timeout":  `CALL SetSettingTimeout(?, ?)`,
-	"del_swap_sticker": `DELETE FROM Mappings WHERE UserID = ? AND StickerID = ?`,
+	"del_swap_sticker": `DELETE FROM Mappings WHERE UserID = ? AND StickerUID = ?`,
 }

@@ -24,19 +24,8 @@ import (
 	"sync"
 	"time"
 
-	telegram "github.com/go-telegram-bot-api/telegram-bot-api"
+	telegram "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
-
-// Shamelessly copied from:
-// https://github.com/go-telegram-bot-api/telegram-bot-api/blob/05e04b526c693e3e104feaa0be23611836af3dcc/helpers.go#L575
-//
-// Since the standard API doesn't have it and the newer 'v5' versions are wonky
-// as hell.
-type sticker struct {
-	ID      string `json:"id"`
-	Type    string `json:"type"`
-	Sticker string `json:"sticker_file_id"`
-}
 
 func (s *Swapper) check(i int64) bool {
 	l, ok := s.limits[i]
@@ -92,7 +81,7 @@ func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []any {
 		if err = r.Scan(&v); err != nil {
 			break
 		}
-		o = append(o, sticker{ID: m.ID + "res" + strconv.Itoa(i), Type: "sticker", Sticker: v})
+		o = append(o, telegram.NewInlineQueryResultCachedSticker(m.ID+"res"+strconv.Itoa(i), v, ""))
 	}
 	if r.Close(); err != nil {
 		s.log.Error("Received an error attempting to scan the inline sticker value for UID: %d: %s!", m.From.ID, err.Error())
@@ -104,12 +93,12 @@ func (s *Swapper) inline(x context.Context, m *telegram.InlineQuery) []any {
 	s.log.Trace(`Found an inline swap match "%s" by %s!`, v, m.From.String())
 	return o
 }
-func (s *Swapper) send(x context.Context, g *sync.WaitGroup, o <-chan telegram.Chattable) {
+func (c *container) send(x context.Context, s *Swapper, g *sync.WaitGroup, o <-chan telegram.Chattable) {
 	s.log.Debug("Starting Telegram sender thread..")
 	for g.Add(1); ; {
 		select {
 		case n := <-o:
-			if _, err := s.bot.Send(n); err != nil {
+			if _, err := c.bot.Send(n); err != nil {
 				s.log.Error(`Error sending Telegram message to chat: %s!`, err.Error())
 			}
 		case <-x.Done():
@@ -119,7 +108,7 @@ func (s *Swapper) send(x context.Context, g *sync.WaitGroup, o <-chan telegram.C
 		}
 	}
 }
-func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram.Chattable) {
+func (c *container) swap(x context.Context, s *Swapper, m *telegram.Message, o chan<- telegram.Chattable) {
 	if m.From.IsBot || len(m.Text) == 0 || len(m.Text) < 3 || len(m.Text) > 16 || m.Text[0] == '/' || m.Text[0] < 33 {
 		return
 	}
@@ -149,13 +138,13 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 		return
 	}
 	s.log.Trace(`Found a swap match "%s" by "%s"!`, v, m.From.String())
-	n := telegram.NewStickerShare(m.Chat.ID, v)
+	n := telegram.NewSticker(m.Chat.ID, telegram.FileID(v))
 	if m.ReplyToMessage != nil {
 		n.ReplyToMessageID = m.ReplyToMessage.MessageID
 	}
 	if p {
 		s.log.Trace("Attempting to delete the swapped message %d..", m.MessageID)
-		if _, err = s.bot.DeleteMessage(telegram.DeleteMessageConfig{ChatID: m.Chat.ID, MessageID: m.MessageID}); err != nil {
+		if _, err = c.bot.Request(telegram.NewDeleteMessage(m.Chat.ID, m.MessageID)); err != nil {
 			s.log.Warning("Received an error attempting to delete a message from GID %s: %s", m.Chat.ID, err.Error())
 		}
 	}
@@ -165,22 +154,22 @@ func (s *Swapper) swap(x context.Context, m *telegram.Message, o chan<- telegram
 	o <- n
 	o <- telegram.NewMessage(m.Chat.ID, "Swapped message from "+v)
 }
-func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegram.Chattable, r <-chan telegram.Update) {
+func (c *container) receive(x context.Context, s *Swapper, g *sync.WaitGroup, o chan<- telegram.Chattable, r <-chan telegram.Update) {
 	s.log.Debug("Starting Telegram receiver thread..")
 	for g.Add(1); ; {
 		select {
 		case n := <-r:
 			if n.InlineQuery != nil {
-				c := telegram.InlineConfig{
+				k := telegram.InlineConfig{
 					Results:       s.inline(x, n.InlineQuery),
 					CacheTime:     180,
 					IsPersonal:    true,
 					InlineQueryID: n.InlineQuery.ID,
 				}
-				if len(c.Results) == 0 {
-					c.SwitchPMParameter, c.SwitchPMText = "new", "Click here to add some Stickers!"
+				if len(k.Results) == 0 {
+					k.SwitchPMParameter, k.SwitchPMText = "new", "Click here to add some Stickers!"
 				}
-				if _, err := s.bot.AnswerInlineQuery(c); err != nil {
+				if _, err := c.bot.Request(k); err != nil {
 					s.log.Error("Received error during inline query response: %s!", err.Error())
 				}
 				break
@@ -198,10 +187,10 @@ func (s *Swapper) receive(x context.Context, g *sync.WaitGroup, o chan<- telegra
 			}
 			if len(n.Message.Text) > 6 && n.Message.Text[0] == '/' && stringMatchIndex(6, n.Message.Text, "/swap_") {
 				s.log.Trace("Received a possible command message from %s!", n.Message.From.String())
-				s.config(x, n.Message, o)
+				c.config(x, s, n.Message, o)
 				break
 			}
-			s.swap(x, n.Message, o)
+			c.swap(x, s, n.Message, o)
 		case <-x.Done():
 			s.log.Debug("Stopping Telegram receiver thread.")
 			g.Done()

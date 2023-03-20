@@ -23,13 +23,14 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"syscall"
 
 	"github.com/PurpleSec/logx"
 	"github.com/PurpleSec/mapper"
 
-	telegram "github.com/go-telegram-bot-api/telegram-bot-api"
+	telegram "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 // Swapper is a struct that contains the threads and config values that can be
@@ -37,13 +38,25 @@ import (
 //
 // Use the 'NewSwapper' function to properly create a Swapper.
 type Swapper struct {
-	sql     *mapper.Map
-	bot     *telegram.BotAPI
 	log     logx.Log
-	add     map[int]string
+	sql     *mapper.Map
+	add     map[int64]string
+	del     map[int64]struct{}
+	lock    sync.RWMutex
 	cancel  context.CancelFunc
 	limits  map[int64]*limit
-	confirm map[int]struct{}
+	confirm map[int64]struct{}
+	bots    []*container
+}
+type container struct {
+	ch  chan telegram.Chattable
+	bot *telegram.BotAPI
+}
+
+func (c *container) stop() {
+	c.bot.StopReceivingUpdates()
+	close(c.ch)
+	c.bot, c.ch = nil, nil
 }
 
 // Run will start the main Swapper process and all associated threads. This
@@ -51,22 +64,18 @@ type Swapper struct {
 //
 // This function returns any errors that occur during shutdown.
 func (s *Swapper) Run() error {
-	r, err := s.bot.GetUpdatesChan(telegram.UpdateConfig{})
-	if err != nil {
-		s.sql.Close()
-		return errors.New("telegram receiver: " + err.Error())
-	}
 	var (
 		o = make(chan os.Signal, 1)
-		m = make(chan telegram.Chattable, 256)
 		x context.Context
 		g sync.WaitGroup
 	)
 	signal.Notify(o, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	x, s.cancel = context.WithCancel(context.Background())
 	s.log.Info("Swapper Telegram Bot Started, spinning up threads..")
-	go s.send(x, &g, m)
-	go s.receive(x, &g, m, r)
+	for i := range s.bots {
+		s.log.Debug("Starting bot %d..", i)
+		s.bots[i].start(x, s, &g)
+	}
 	for {
 		select {
 		case <-o:
@@ -78,10 +87,12 @@ func (s *Swapper) Run() error {
 cleanup:
 	signal.Stop(o)
 	s.cancel()
-	s.bot.StopReceivingUpdates()
+	for i := range s.bots {
+		s.log.Debug("Stopping bot %d..", i)
+		s.bots[i].stop()
+	}
 	g.Wait()
 	close(o)
-	close(m)
 	return s.sql.Close()
 }
 
@@ -108,9 +119,25 @@ func New(s string, empty bool) (*Swapper, error) {
 		}
 		l.Add(f)
 	}
-	b, err := telegram.NewBotAPI(c.Telegram)
-	if err != nil {
-		return nil, errors.New("telegram login: " + err.Error())
+	z := make([]*container, 1, 4)
+	if k := len(c.Telegram.e); k > 0 {
+		z = append(z, make([]*container, k-1)...)
+		for i := range c.Telegram.e {
+			b, err := telegram.NewBotAPI(c.Telegram.e[i])
+			if err != nil {
+				return nil, errors.New("telegram key (" + strconv.Itoa(i) + ") login: " + err.Error())
+			}
+			z[i] = &container{bot: b}
+		}
+	} else {
+		b, err := telegram.NewBotAPI(c.Telegram.s)
+		if err != nil {
+			return nil, errors.New("telegram login: " + err.Error())
+		}
+		z[0] = &container{bot: b}
+	}
+	if len(z) == 1 && z[0] == nil {
+		return nil, errors.New("no telegram accounts")
 	}
 	d, err := sql.Open(
 		"mysql",
@@ -139,10 +166,17 @@ func New(s string, empty bool) (*Swapper, error) {
 	}
 	return &Swapper{
 		sql:     m,
-		bot:     b,
 		log:     l,
-		add:     make(map[int]string),
+		add:     make(map[int64]string),
+		del:     make(map[int64]struct{}),
+		bots:    z,
 		limits:  make(map[int64]*limit),
-		confirm: make(map[int]struct{}),
+		confirm: make(map[int64]struct{}),
 	}, nil
+}
+func (c *container) start(x context.Context, s *Swapper, g *sync.WaitGroup) {
+	r := c.bot.GetUpdatesChan(telegram.UpdateConfig{})
+	c.ch = make(chan telegram.Chattable, 128)
+	go c.send(x, s, g, c.ch)
+	go c.receive(x, s, g, c.ch, r)
 }

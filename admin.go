@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	telegram "github.com/go-telegram-bot-api/telegram-bot-api"
+	telegram "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 const (
@@ -69,8 +69,10 @@ func sendResponse(o chan<- telegram.Chattable, i int64, r int, s string) {
 	n.ReplyToMessageID = r
 	o <- n
 }
-func (s *Swapper) config(x context.Context, m *telegram.Message, o chan<- telegram.Chattable) {
-	u, err := s.bot.GetChatMember(telegram.ChatConfigWithUser{ChatID: m.Chat.ID, UserID: m.From.ID})
+func (c *container) config(x context.Context, s *Swapper, m *telegram.Message, o chan<- telegram.Chattable) {
+	u, err := c.bot.GetChatMember(telegram.GetChatMemberConfig{
+		ChatConfigWithUser: telegram.ChatConfigWithUser{ChatID: m.Chat.ID, UserID: m.From.ID},
+	})
 	if err != nil {
 		s.log.Error("Received an error during ChatMember lookup (GID: %d, UID: %d): %s!", m.Chat.ID, m.From.ID, err.Error())
 		return

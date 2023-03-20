@@ -21,7 +21,7 @@ import (
 	"strings"
 	"sync"
 
-	telegram "github.com/go-telegram-bot-api/telegram-bot-api"
+	telegram "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 const (
@@ -102,7 +102,47 @@ var builders = sync.Pool{
 
 var confirm struct{}
 
-func (s *Swapper) list(x context.Context, i int) string {
+func (s *Swapper) clearUser(i int64) {
+	s.lock.Lock()
+	delete(s.add, i)
+	delete(s.del, i)
+	delete(s.confirm, i)
+	s.lock.Unlock()
+}
+func (s *Swapper) setUserDelete(i int64) {
+	s.lock.Lock()
+	s.del[i] = confirm
+	s.lock.Unlock()
+}
+func (s *Swapper) setUserConfirm(i int64) {
+	s.lock.Lock()
+	s.confirm[i] = confirm
+	s.lock.Unlock()
+}
+func (s *Swapper) getUserAdd(i int64) string {
+	s.lock.RLock()
+	v := s.add[i]
+	s.lock.RUnlock()
+	return v
+}
+func (s *Swapper) getUserDelete(i int64) bool {
+	s.lock.RLock()
+	_, ok := s.del[i]
+	s.lock.RUnlock()
+	return ok
+}
+func (s *Swapper) getUserConfirm(i int64) bool {
+	s.lock.RLock()
+	_, ok := s.confirm[i]
+	s.lock.RUnlock()
+	return ok
+}
+func (s *Swapper) setUserAdd(i int64, v string) {
+	s.lock.Lock()
+	s.add[i] = v
+	s.lock.Unlock()
+}
+func (s *Swapper) list(x context.Context, i int64) string {
 	r, err := s.sql.QueryContext(x, "list", i)
 	if err != nil {
 		s.log.Error("Received an error when attempting to list the user swaps (UID: %d): %s!", i, err.Error())
@@ -132,7 +172,7 @@ func (s *Swapper) list(x context.Context, i int) string {
 	}
 	return o
 }
-func (s *Swapper) clear(x context.Context, i int) string {
+func (s *Swapper) clear(x context.Context, i int64) string {
 	if _, err := s.sql.ExecContext(x, "clear", i); err != nil {
 		s.log.Error("Received an error when attempting to clear the user swaps (UID: %d): %s!", i, err.Error())
 		return errorMessage
@@ -140,30 +180,64 @@ func (s *Swapper) clear(x context.Context, i int) string {
 	return "Sweet! I've cleared your swap list!"
 }
 func (s *Swapper) sticker(x context.Context, m *telegram.Message) string {
-	if delete(s.confirm, m.From.ID); m.Sticker == nil {
+	if m.Sticker == nil {
 		return "Sorry, but I require a Sticker.\n\nPlease invoke the previous command to try again."
 	}
-	v, ok := s.add[m.From.ID]
-	if delete(s.add, m.From.ID); !ok {
-		return helpMessage
+	if s.getUserDelete(m.From.ID) {
+		if _, err := s.sql.ExecContext(x, "del_swap_sticker", m.From.ID, m.Sticker.FileUniqueID); err != nil {
+			s.log.Error("Received an error when attempting to del the user swap (UID: %d): %s!", m.From.ID, err.Error())
+			return errorMessage
+		}
+		return "Sweet! I've removed the swap word(s) associated with that sticker!"
 	}
-	if _, err := s.sql.ExecContext(x, "set_swap", m.From.ID, v, m.Sticker.FileID); err != nil {
-		s.log.Error("Received an error when attempting to add a user swap (UID: %d): %s!", m.From.ID, err.Error())
+	if v := s.getUserAdd(m.From.ID); len(v) > 0 {
+		if _, err := s.sql.ExecContext(x, "set_swap", m.From.ID, v, m.Sticker.FileID, m.Sticker.FileUniqueID); err != nil {
+			s.log.Error("Received an error when attempting to add a user swap (UID: %d): %s!", m.From.ID, err.Error())
+			return errorMessage
+		}
+		return `Sweet! I added the sticker to the swap word "` + v + `"!`
+	}
+	r, err := s.sql.QueryContext(x, "check_swap", m.From.ID, m.Sticker.FileUniqueID)
+	if err != nil {
+		s.log.Error("Received an error when attempting to check a user swap (UID: %d): %s!", m.From.ID, err.Error())
 		return errorMessage
 	}
-	return `Sweet! I added the sticker to the swap word "` + v + `"!`
+	var (
+		c int
+		n string
+		b = builders.Get().(*strings.Builder)
+	)
+	for b.WriteString("That sticker is tied to the following word(s):\n"); r.Next(); {
+		if err := r.Scan(&n); err != nil {
+			s.log.Error("Received an error when attempting to scan the user swaps (UID: %d): %s!", m.From.ID, err.Error())
+			continue
+		}
+		if len(n) == 0 {
+			continue
+		}
+		b.WriteString("- " + n + "\n")
+		c++
+	}
+	r.Close()
+	o := b.String()
+	b.Reset()
+	if builders.Put(b); c == 0 {
+		return "You don't have that Sticker assigned to any swap words.\nUse the \"/add <word>\" command to add it!"
+	}
+	return o
 }
 func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- telegram.Chattable) {
 	if m.Sticker != nil {
 		o <- telegram.NewMessage(m.Chat.ID, s.sticker(x, m))
+		s.clearUser(m.From.ID)
 		return
 	}
-	_, ok := s.confirm[m.From.ID]
-	if delete(s.confirm, m.From.ID); ok && strings.EqualFold(m.Text, "confirm") {
+	ok := s.getUserConfirm(m.From.ID)
+	if s.clearUser(m.From.ID); ok && strings.EqualFold(m.Text, "confirm") {
 		o <- telegram.NewMessage(m.Chat.ID, s.clear(x, m.From.ID))
 		return
 	}
-	if delete(s.add, m.From.ID); len(m.Text) <= 1 {
+	if len(m.Text) <= 1 {
 		o <- telegram.NewMessage(m.Chat.ID, helpMessage)
 		return
 	}
@@ -178,10 +252,13 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 		case "list":
 			o <- telegram.NewMessage(m.Chat.ID, s.list(x, m.From.ID))
 		case "clear":
-			s.confirm[m.From.ID] = confirm
+			s.setUserConfirm(m.From.ID)
 			o <- telegram.NewMessage(m.Chat.ID, `Please reply with "confirm" in order to clear your list.`)
 		case "start":
 			o <- telegram.NewMessage(m.Chat.ID, helpMessageBasic)
+		case "remove":
+			s.setUserDelete(m.From.ID)
+			o <- telegram.NewMessage(m.Chat.ID, "Please reply with the sticker you whish to delete from your swap list.")
 		default:
 			o <- telegram.NewMessage(m.Chat.ID, helpMessage)
 		}
@@ -227,7 +304,7 @@ func (s *Swapper) command(x context.Context, m *telegram.Message, o chan<- teleg
 			o <- telegram.NewMessage(m.Chat.ID, `You don't have a sticker mapped for "`+v+`"!`)
 			return
 		}
-		o <- telegram.NewStickerShare(m.Chat.ID, n)
+		o <- telegram.NewSticker(m.Chat.ID, telegram.FileID(n))
 		return
 	case "start":
 		o <- telegram.NewMessage(m.Chat.ID, helpMessageBasic)

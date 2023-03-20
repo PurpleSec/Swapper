@@ -17,6 +17,7 @@
 package swapper
 
 import (
+	"encoding/json"
 	"errors"
 	"time"
 
@@ -39,6 +40,7 @@ const Defaults = `{
 		"level": 2
 	},
 	"telegram_key": ""
+	"telegram_key_alt": ""
 }
 `
 
@@ -53,9 +55,9 @@ type limit struct {
 	count uint16
 }
 type config struct {
-	Database database `json:"db"`
-	Telegram string   `json:"telegram_key"`
-	Log      log      `json:"log"`
+	Database database     `json:"db"`
+	Telegram stringOrList `json:"telegram_key"`
+	Log      log          `json:"log"`
 }
 type database struct {
 	Name     string        `json:"database"`
@@ -63,6 +65,10 @@ type database struct {
 	Username string        `json:"user"`
 	Password string        `json:"password"`
 	Timeout  time.Duration `json:"timeout"`
+}
+type stringOrList struct {
+	s string
+	e []string
 }
 
 func (c *config) check() error {
@@ -79,4 +85,10 @@ func (c *config) check() error {
 		c.Database.Timeout = time.Minute * 3
 	}
 	return nil
+}
+func (s *stringOrList) UnmarshalJSON(b []byte) error {
+	if err := json.Unmarshal(b, &s.e); err == nil {
+		return nil
+	}
+	return json.Unmarshal(b, &s.s)
 }
