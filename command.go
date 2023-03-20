@@ -30,11 +30,13 @@ You can use the following commands:
 
 /add <word> - Add a word to be swapped
 /get <word> - Get the sticker assigned to the word
-/remove <word> - Remove a swapped word
+/remove [word] - Remove a swapped word
 
 /list - List all your swapped words
 /clear - Remove all your swapped words
-/help - More information about me!`
+/help - More information about me!
+
+If you send me a Sticker, I can tell you what words you have assigned to it!`
 	errorMessage = `Sorry I've seem to have encountered an error.
 
 Please try again later.`

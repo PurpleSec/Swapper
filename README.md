@@ -38,3 +38,6 @@ The default config can be dumped to Stdout using the '-d' command line flag.
     "telegram_key": ""
 }
 ```
+
+The "telegram_key" can also be a string list that can be used to manage multiple
+Telegram accounts.
