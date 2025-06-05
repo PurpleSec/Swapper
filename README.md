@@ -9,7 +9,7 @@ stickers via names or parses.
 
 ```[text]
 Sticker Swapper Telegram Bot
-Purple Security (losynth.com/purple) 2021 - 2023
+Purple Security (losynth.com/purple) 2021 - 2025
 
 Usage:
   -h              Print this help menu.

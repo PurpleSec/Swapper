@@ -1,4 +1,4 @@
-// Copyright (C) 2021 - 2023 PurpleSec Team
+// Copyright (C) 2021 - 2025 PurpleSec Team
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -28,7 +28,7 @@ var buildVersion = "unknown"
 const version = "v1.3.1"
 
 const usage = `Sticker Swapper Telegram Bot ` + version + `
-Purple Security (losynth.com/purple) 2021 - 2023
+Purple Security (losynth.com/purple) 2021 - 2025
 
 Usage:
   -h              Print this help menu.

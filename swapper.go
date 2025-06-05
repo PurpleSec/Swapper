@@ -1,4 +1,4 @@
-// Copyright (C) 2021 - 2023 PurpleSec Team
+// Copyright (C) 2021 - 2025 PurpleSec Team
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published
@@ -21,6 +21,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -123,14 +124,26 @@ func New(s string, empty bool) (*Swapper, error) {
 	if k := len(c.Telegram.e); k > 0 {
 		z = append(z, make([]*container, k-1)...)
 		for i := range c.Telegram.e {
-			b, err := telegram.NewBotAPI(c.Telegram.e[i])
+			b, err := telegram.NewBotAPIWithClient(c.Telegram.e[i], "https://api.telegram.org/bot%s/%s", &http.Client{
+				Transport: &http.Transport{
+					Proxy:             http.ProxyFromEnvironment,
+					MaxIdleConns:      256,
+					ForceAttemptHTTP2: false,
+				},
+			})
 			if err != nil {
 				return nil, errors.New("telegram key (" + strconv.Itoa(i) + ") login: " + err.Error())
 			}
 			z[i] = &container{bot: b}
 		}
 	} else {
-		b, err := telegram.NewBotAPI(c.Telegram.s)
+		b, err := telegram.NewBotAPIWithClient(c.Telegram.s, "https://api.telegram.org/bot%s/%s", &http.Client{
+			Transport: &http.Transport{
+				Proxy:             http.ProxyFromEnvironment,
+				MaxIdleConns:      256,
+				ForceAttemptHTTP2: false,
+			},
+		})
 		if err != nil {
 			return nil, errors.New("telegram login: " + err.Error())
 		}
