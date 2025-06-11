@@ -26,7 +26,7 @@ import (
 )
 
 // Defaults is a string representation of a JSON formatted default configuration
-// for a Watcher instance.
+// for a Swapper instance.
 const Defaults = `{
 	"db": {
 		"host": "tcp(localhost:3306)",
@@ -36,7 +36,7 @@ const Defaults = `{
 		"database": "swapper_db"
 	},
 	"log": {
-		"file": "watcher.log",
+		"file": "swapper.log",
 		"level": 2
 	},
 	"telegram_key": ""
