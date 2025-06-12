@@ -46,16 +46,7 @@ var setupStatements = []string{
 	`ALTER TABLE Mappings MODIFY UserID BIGINT(64) UNSIGNED NOT NULL`,
 	`ALTER TABLE Settings MODIFY Amount INT(16) UNSIGNED NOT NULL DEFAULT 5`,
 	`ALTER TABLE Settings MODIFY Timeout INT(16) UNSIGNED NOT NULL DEFAULT 5`,
-	`CREATE PROCEDURE IF NOT EXISTS SetSettingLimit(GID BIGINT(64), Amount INT(16))
-	BEGIN
-		SET @gid = COALESCE((SELECT GroupID FROM Settings WHERE GroupID = GID LIMIT 1), 0);
-		IF @gid = 0 THEN
-			INSERT INTO Settings(GroupID, Amount) VALUES(GID, Amount);
-		ELSE
-			UPDATE Settings SET Amount = Amount WHERE GroupID = GID;
-		END IF;
-	END;`,
-	`CREATE PROCEDURE IF NOT EXISTS SetSettingDelete(GID BIGINT(64) UNSIGNED, Remove BOOLEAN)
+	`CREATE PROCEDURE IF NOT EXISTS SetSettingDelete(GID BIGINT(64), Remove BOOLEAN)
 	BEGIN
 		SET @gid = COALESCE((SELECT GroupID FROM Settings WHERE GroupID = GID LIMIT 1), 0);
 		IF @gid = 0 THEN
@@ -64,16 +55,7 @@ var setupStatements = []string{
 			UPDATE Settings SET Remove = Remove WHERE GroupID = GID;
 		END IF;
 	END;`,
-	`CREATE PROCEDURE IF NOT EXISTS SetSettingTimeout(GID BIGINT(64) UNSIGNED, Timeout INT(16) UNSIGNED)
-	BEGIN
-		SET @gid = COALESCE((SELECT GroupID FROM Settings WHERE GroupID = GID LIMIT 1), 0);
-		IF @gid = 0 THEN
-			INSERT INTO Settings(GroupID, Timeout) VALUES(GID, Timeout);
-		ELSE
-			UPDATE Settings SET Timeout = Timeout WHERE GroupID = GID;
-		END IF;
-	END;`,
-	`CREATE PROCEDURE IF NOT EXISTS SetSettingEnabled(GID BIGINT(64) UNSIGNED, Enabled BOOLEAN)
+	`CREATE PROCEDURE IF NOT EXISTS SetSettingEnabled(GID BIGINT(64), Enabled BOOLEAN)
 	BEGIN
 		SET @gid = COALESCE((SELECT GroupID FROM Settings WHERE GroupID = GID LIMIT 1), 0);
 		IF @gid = 0 THEN
@@ -82,7 +64,25 @@ var setupStatements = []string{
 			UPDATE Settings SET Enabled = Enabled WHERE GroupID = GID;
 		END IF;
 	END;`,
-	`CREATE PROCEDURE IF NOT EXISTS GetSticker(User BIGINT(64) UNSIGNED, GID BIGINT(64) UNSIGNED, Word VARCHAR(16))
+	`CREATE PROCEDURE IF NOT EXISTS SetSettingLimit(GID BIGINT(64), Amount INT(16) UNSIGNED)
+	BEGIN
+		SET @gid = COALESCE((SELECT GroupID FROM Settings WHERE GroupID = GID LIMIT 1), 0);
+		IF @gid = 0 THEN
+			INSERT INTO Settings(GroupID, Amount) VALUES(GID, Amount);
+		ELSE
+			UPDATE Settings SET Amount = Amount WHERE GroupID = GID;
+		END IF;
+	END;`,
+	`CREATE PROCEDURE IF NOT EXISTS SetSettingTimeout(GID BIGINT(64), Timeout INT(16) UNSIGNED)
+	BEGIN
+		SET @gid = COALESCE((SELECT GroupID FROM Settings WHERE GroupID = GID LIMIT 1), 0);
+		IF @gid = 0 THEN
+			INSERT INTO Settings(GroupID, Timeout) VALUES(GID, Timeout);
+		ELSE
+			UPDATE Settings SET Timeout = Timeout WHERE GroupID = GID;
+		END IF;
+	END;`,
+	`CREATE PROCEDURE IF NOT EXISTS GetSticker(User BIGINT(64) UNSIGNED, GID BIGINT(64), Word VARCHAR(16))
 	BEGIN
 		SET @gid = COALESCE((SELECT GroupID FROM Settings WHERE GroupID = GID LIMIT 1), 0);
 		IF @gid = 0 THEN

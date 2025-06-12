@@ -124,6 +124,7 @@ func (c *container) swap(x context.Context, s *Swapper, m *telegram.Message, o c
 	r, err := s.sql.QueryContext(x, "swap", m.From.ID, m.Chat.ID, strings.TrimSpace(m.Text))
 	if err != nil {
 		s.log.Error("Received an error attempting to get the sticker value for GID %d, UID: %d: %s!", m.Chat.ID, m.From.ID, err.Error())
+		return
 	}
 	for r.Next() {
 		if err = r.Scan(&e, &a, &t, &p, &v); err != nil {
