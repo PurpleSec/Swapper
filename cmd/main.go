@@ -25,7 +25,7 @@ import (
 
 var buildVersion = "unknown"
 
-const version = "v1.3.1"
+const version = "v1.3.2"
 
 const usage = `Sticker Swapper Telegram Bot ` + version + `
 Purple Security (losynth.com/purple) 2021 - 2025
