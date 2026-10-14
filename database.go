@@ -104,14 +104,14 @@ var setupStatements = []string{
 
 var queryStatements = map[string]string{
 	"swap":             `CALL GetSticker(?, ?, ?)`,
-	"list":             `SELECT Keyword FROM Mappings where UserID = ?`,
+	"list":             `SELECT Keyword FROM Mappings where UserID = ? ORDER BY Keyword`,
 	"clear":            `DELETE FROM Mappings where UserID = ?`,
 	"inline":           `SELECT StickerID FROM Mappings WHERE UserID = ? AND Keyword LIKE ?`,
 	"get_swap":         `SELECT StickerID FROM Mappings WHERE UserID = ? AND Keyword = ?`,
 	"set_swap":         `CALL SetSticker(?, ?, ?, ?)`,
 	"del_swap":         `DELETE FROM Mappings WHERE UserID = ? AND Keyword = ?`,
 	"list_opt":         `SELECT Enabled, Amount, Timeout, Remove FROM Settings WHERE GroupID = ?`,
-	"inline_all":       `SELECT StickerID FROM Mappings WHERE UserID = ?`,
+	"inline_all":       `SELECT StickerID FROM Mappings WHERE UserID = ? ORDER BY Keyword`,
 	"check_swap":       `SELECT Keyword FROM Mappings WHERE UserID = ? AND StickerUID = ?`,
 	"set_opt_limit":    `CALL SetSettingLimit(?, ?)`,
 	"set_opt_delete":   `CALL SetSettingDelete(?, ?)`,
